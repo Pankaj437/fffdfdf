@@ -1,7 +1,9 @@
-name: Capture Twitter Screenshots
+name: Capture Twitter Screenshots and Email Analysis
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * *"  # Runs daily at 6 AM UTC
 
 jobs:
   screenshot:
@@ -26,3 +28,28 @@ jobs:
     - name: Run Playwright screenshot script
       run: |
         xvfb-run --auto-servernum --server-args='-screen 0 1280x720x24' python downnn.py
+
+  gemini_email:
+    needs: screenshot
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+
+    - name: Install Python dependencies
+      run: |
+        pip install google-generativeai
+
+    - name: Run Gemini and Send Email
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        EMAIL_USER: ${{ secrets.EMAIL_USER }}
+        EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
+        EMAIL_TO: ${{ secrets.EMAIL_TO }}
+      run: python send_to_gemini.py
