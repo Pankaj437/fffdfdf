@@ -104,7 +104,7 @@ def main():
             break  # Use first working Nitter instance
 
         print("Waiting 20 seconds before processing the next username...")
-        time.sleep(20)
+        time.sleep(30)
 
 if __name__ == "__main__":
     main()
