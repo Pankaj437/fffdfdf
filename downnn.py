@@ -86,15 +86,15 @@ def main():
 
     screenshot_dir = create_screenshot_directory()
 
-    # Get yesterday's UTC timestamp
-    yesterday = datetime.utcnow() - timedelta(days=1)
-    since_time = yesterday.strftime("%Y-%m-%d_%H:%M:%S_UTC")
+    # Get time 2 hours ago in UTC
+    since_time = (datetime.utcnow() - timedelta(hours=2)).strftime("%Y-%m-%d_%H:%M")
 
     for username in usernames:
         print(f"\nProcessing username: {username}")
 
-        # Build search query string
-        query = f"search?f=tweets&q=from%3A{username}+since%3A{since_time}&since=&until=&near="
+        # Build search query string for tweets from last 2 hours
+        query = f"search?f=tweets&q=from%3A{username}+since%3A{since_time}"
+
         user_nitter_urls = [instance.format(query) for instance in nitter_instances]
 
         for url in user_nitter_urls:
@@ -105,6 +105,7 @@ def main():
 
         print("Waiting 20 seconds before processing the next username...")
         time.sleep(30)
+
 
 if __name__ == "__main__":
     main()
