@@ -45,6 +45,7 @@ jobs:
     - name: Install Python dependencies
       run: |
         pip install google-generativeai
+        pip install google-genai
 
     - name: Run Gemini and Send Email
       env:
