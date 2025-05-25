@@ -3,7 +3,7 @@ name: Capture Twitter Screenshots and Email Analysis
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 6 * * *"  # Runs daily at 6 AM UTC
+    - cron: "0 */2 * * *" # Runs daily at 6 AM UTC
 
 jobs:
   screenshot_and_email:
