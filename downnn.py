@@ -22,7 +22,7 @@ def read_usernames(file_path="usernames.txt"):
         print(f"Error reading usernames from {file_path}: {e}")
         return []
 
-def create_screenshot_directory(base_path="/twitter/scraped/screenshots"):
+def create_screenshot_directory(base_path="scraped/screenshots"):
     """Create a single directory for all screenshots."""
     try:
         os.makedirs(base_path, exist_ok=True)
