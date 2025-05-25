@@ -6,7 +6,7 @@ on:
     - cron: "0 6 * * *"  # Runs daily at 6 AM UTC
 
 jobs:
-  screenshot:
+  screenshot_and_email:
     runs-on: ubuntu-latest
 
     steps:
@@ -22,30 +22,12 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y xvfb
-        pip install playwright
+        pip install playwright google-generativeai google-genai
         playwright install chromium
 
     - name: Run Playwright screenshot script
       run: |
         xvfb-run --auto-servernum --server-args='-screen 0 1280x720x24' python downnn.py
-
-  gemini_email:
-    needs: screenshot
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout repo
-      uses: actions/checkout@v3
-
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.11"
-
-    - name: Install Python dependencies
-      run: |
-        pip install google-generativeai
-        pip install google-genai
 
     - name: Run Gemini and Send Email
       env:
