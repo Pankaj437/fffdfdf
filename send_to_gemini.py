@@ -16,7 +16,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 # Directories
-BASE_DIR = os.path.expanduser("~/twitter/scraped/screenshots")
+BASE_DIR = os.path.expanduser("scraped/screenshots")
 RESPONSE_DIR = os.path.join(BASE_DIR, "gemini_analysis")
 os.makedirs(RESPONSE_DIR, exist_ok=True)
 
