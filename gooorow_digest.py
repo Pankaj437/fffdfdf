@@ -64,7 +64,7 @@ def fetch_digest_and_summarize_with_email():
 
         json_content = response.json()
         if not json_content or len(json_content) == 0:
-            raise Exception("No digest data returned from Groww CMS API.")
+            raise
 
         digest_content = json.dumps(json_content[0])  # Use the first digest item
         logger.info("Successfully fetched digest data")
@@ -110,7 +110,7 @@ def format_summary_for_email(summary):
         # Clean up markdown and format for plain text
         cleaned_section = (section.replace("**", "")
                           .replace("*", "-")
-                          .replace("^- ", "  - ", re=True)
+                          .replace("^- ", "  - ")
                           .replace("\n\s*\n", "\n\n")
                           .strip())
         
@@ -122,7 +122,6 @@ def format_summary_for_email(summary):
 
 def send_json_to_gemini(json_content):
     prompt = """*** Please take your time to think critically and respond with accuracy, as this is my primary goal ***
-    ***focus on lastest date only****
 You are an expert AI financial news analyst tasked with analyzing the JSON content from the Groww CMS API, which contains the Groww Daily Digest, a summary of financial market updates, news, and stock movements.
 
 Your goal is to extract key information from the JSON data and present it in a concise, structured, and email-friendly plain text summary. Focus ONLY on the main content, such as market updates (e.g., sensex, nifty, top_gainers, top_losers, about_market), news articles (news field), and stock updates. IGNORE metadata (e.g., id, slug, date) unless it directly relates to the news context (e.g., date of the digest). Parse any embedded HTML in fields like top_gainers, top_losers, or news.description to extract text content.
@@ -177,8 +176,7 @@ IMPORTANT FORMATTING INSTRUCTIONS:
                     mime_type="application/json"
                 ),
                 types.Part(text=prompt)
-            ],
-            generation_config={"thinking_config": {"thinking_budget": 16384}}
+            ]
         )
         return response
     except Exception as e:
