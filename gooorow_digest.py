@@ -7,6 +7,7 @@ import base64
 from google import genai
 from google.genai import types
 import logging
+import time
 from pathlib import Path
 
 # Setup logging
@@ -29,7 +30,8 @@ if not EMAIL_USER or not EMAIL_PASS:
 
 # Initialize Gemini client
 try:
-    client = genai.Client(api_key=GEMINI_API_KEY)
+    genai.configure(api_key=GEMINI_API_KEY)
+    client = genai.GenerativeModel('gemini-1.5-flash')
     logger.info("Initialized Gemini client with API key")
 except Exception as e:
     logger.error(f"Failed to initialize Gemini client: {e}")
@@ -64,18 +66,19 @@ def fetch_digest_and_summarize_with_email():
 
         json_content = response.json()
         if not json_content or len(json_content) == 0:
-            raise
+            raise Exception("No digest data returned from Groww CMS API.")
 
         digest_content = json.dumps(json_content[0])  # Use the first digest item
         logger.info("Successfully fetched digest data")
 
-        # Step 2: Send JSON content to Gemini API
-        gemini_response = send_json_to_gemini(digest_content)
+        # Step 2: Send JSON content to Gemini API with retry logic
+        gemini_response = send_json_to_gemini_with_retry(digest_content)
         logger.info("Received response from Gemini API")
 
         # Step 3: Extract and format summary
         if gemini_response.text:
             summary = gemini_response.text
+            logger.info(f"Gemini response: {summary[:100]}...")  # Log first 100 chars for debugging
             # Remove markdown code blocks and clean up
             summary = summary.replace("```json\n", "").replace("```", "").strip()
             
@@ -120,7 +123,7 @@ def format_summary_for_email(summary):
 
     return formatted
 
-def send_json_to_gemini(json_content):
+def send_json_to_gemini_with_retry(json_content, max_retries=3, delay=5):
     prompt = """*** Please take your time to think critically and respond with accuracy, as this is my primary goal ***
 You are an expert AI financial news analyst tasked with analyzing the JSON content from the Groww CMS API, which contains the Groww Daily Digest, a summary of financial market updates, news, and stock movements.
 
@@ -166,22 +169,32 @@ IMPORTANT FORMATTING INSTRUCTIONS:
 *   Be concise and human-readable, targeting 200-400 words total.
 *   If the JSON includes HTML (e.g., in top_gainers or news.description), extract the text content and ignore formatting tags.
 """
-    try:
-        logger.info("Sending JSON content to Gemini API")
-        response = client.models.generate_content(
-            model="gemini-2.5-flash-preview-05-20",
-            contents=[
-                types.Part.from_bytes(
-                    data=base64.b64encode(json_content.encode()),
-                    mime_type="application/json"
-                ),
-                types.Part(text=prompt)
-            ]
-        )
-        return response
-    except Exception as e:
-        logger.error(f"Gemini API request failed: {e}")
-        raise
+    for attempt in range(max_retries):
+        try:
+            logger.info(f"Sending JSON content to Gemini API (Attempt {attempt + 1}/{max_retries})")
+            response = client.generate_content(
+                contents=[
+                    {
+                        "parts": [
+                            {"text": prompt},
+                            {
+                                "inline_data": {
+                                    "mime_type": "application/json",
+                                    "data": base64.b64encode(json_content.encode()).decode()
+                                }
+                            }
+                        ]
+                    }
+                ]
+            )
+            return response
+        except Exception as e:
+            logger.error(f"Gemini API attempt {attempt + 1} failed: {e}")
+            if attempt < max_retries - 1:
+                logger.info(f"Retrying in {delay} seconds...")
+                time.sleep(delay)
+            else:
+                raise Exception(f"Gemini API failed after {max_retries} attempts: {e}")
 
 def send_email(to_address, subject, body):
     msg = MIMEText(body)
