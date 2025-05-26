@@ -169,7 +169,7 @@ IMPORTANT FORMATTING INSTRUCTIONS:
     try:
         logger.info("Sending JSON content to Gemini API")
         response = client.models.generate_content(
-            model="gemini-2.5-flash-preview-04-17",
+            model="gemini-2.5-flash-preview-05-20",
             contents=[
                 types.Part.from_bytes(
                     data=base64.b64encode(json_content.encode()),
