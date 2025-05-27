@@ -2,6 +2,7 @@ import os
 import smtplib
 import logging
 from google import genai
+from google.genai.types import Tool, GenerateContentConfig, GoogleSearch
 from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -110,25 +111,37 @@ def main():
         return
 
     try:
+        # Define Google Search tool
+        google_search_tool = Tool(google_search=GoogleSearch())
+
         # Query Gemini API
         logger.info("Querying Gemini API...")
         response = client.models.generate_content(
             model=MODEL_ID,
             contents=prompt,
-            config={"tools": [{"google_search": {}}]},
+            config=GenerateContentConfig(
+                tools=[google_search_tool],
+                thinking_config=genai.types.ThinkingConfig(
+                    include_thoughts=True,  # Enable thinking
+                    thinking_budget=1024    # Set thinking budget
+                ),
+                response_modalities=["TEXT"]
+            )
         )
 
         # Log the raw response for debugging
         logger.debug(f"Raw API response: {response}")
 
         # Extract response and metadata
-        if not response or not hasattr(response, 'text') or response.text is None:
-            error_msg = "No valid response received from Gemini API. The response may be empty or malformed."
-            logger.error(error_msg)
-            send_email(error_msg)
-            return
+        response_text = ""
+        for part in response.candidates[0].content.parts:
+            if not part.text:
+                continue
+            if part.thought:
+                response_text += f"Thought summary:\n{part.text}\n\n"
+            else:
+                response_text += f"Answer:\n{part.text}\n\n"
 
-        response_text = response.text
         try:
             queries = response.candidates[0].grounding_metadata.web_search_queries if response.candidates else []
             grounding = response.candidates[0].grounding_metadata.grounding_chunks if response.candidates else []
