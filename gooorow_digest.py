@@ -4,8 +4,7 @@ import json
 import smtplib
 from email.mime.text import MIMEText
 import base64
-from google import genai
-from google.genai import types
+import google.generativeai as genai
 import logging
 import time
 from pathlib import Path
@@ -30,12 +29,14 @@ if not EMAIL_USER or not EMAIL_PASS:
 
 # Initialize Gemini client
 try:
-    genai.configure(api_key=GEMINI_API_KEY)
-    client = genai.GenerativeModel('gemini-1.5-flash')
+    client = genai.Client()  # API key is automatically loaded from GEMINI_API_KEY
     logger.info("Initialized Gemini client with API key")
 except Exception as e:
     logger.error(f"Failed to initialize Gemini client: {e}")
     exit(1)
+
+# Gemini model
+MODEL_ID = "gemini-1.5-flash"
 
 def fetch_digest_and_summarize_with_email():
     summary = ""
@@ -172,19 +173,11 @@ IMPORTANT FORMATTING INSTRUCTIONS:
     for attempt in range(max_retries):
         try:
             logger.info(f"Sending JSON content to Gemini API (Attempt {attempt + 1}/{max_retries})")
-            response = client.generate_content(
+            response = client.models.generate_content(
+                model=MODEL_ID,
                 contents=[
-                    {
-                        "parts": [
-                            {"text": prompt},
-                            {
-                                "inline_data": {
-                                    "mime_type": "application/json",
-                                    "data": base64.b64encode(json_content.encode()).decode()
-                                }
-                            }
-                        ]
-                    }
+                    {"mime_type": "text/plain", "data": prompt.encode('utf-8')},
+                    {"mime_type": "application/json", "data": base64.b64encode(json_content.encode()).decode()}
                 ]
             )
             return response
