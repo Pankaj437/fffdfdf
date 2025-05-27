@@ -21,7 +21,7 @@ jobs:
     - name: Install dependencies
       run: |
         pip install requests google-generativeai
-        pip install -q -U "google-genai>=1.0.0
+        pip install -q -U "google-genai>=1.0.0"
         
 
     - name: Run Groww Digest Analysis Script
