@@ -58,14 +58,11 @@ def fetch_and_clean_pulse():
 
 def summarize_with_gemini(html_text):
     prompt = f"""
-You are a financial analyst. The following is raw HTML text extracted from Pulse (Zerodha's financial news feed). Summarize the top 5 most relevant financial news stories involving Indian companies today. Focus on impactful developments like M&A, funding, government policy, regulatory changes, or significant market moves.
+You are a financial analyst. The following is raw HTML text extracted from Pulse (Zerodha's financial news feed). Summarize the top most relevant financial news stories involving Indian companies today. Focus on impactful developments like M&A, funding, government policy, regulatory changes, or significant market moves.
 
-Keep the summary clean, accurate, and useful for a market investor or trader. Use markdown format in a table like:
+Keep the summary clean, accurate, and useful for a market investor or trader. :
+when needed use google search otherwise only think critically
 
-| Title | Summary | Source |
-|-------|---------|--------|
-
-If no relevant stories are found, explain that too. Below is the text:
 
 \"\"\"{html_text[:15000]}\"\"\"
 """
@@ -78,7 +75,7 @@ If no relevant stories are found, explain that too. Below is the text:
                 tools=[Tool(google_search=GoogleSearch())],
                 thinking_config=genai.types.ThinkingConfig(
                     include_thoughts=True,
-                    thinking_budget=1024
+                    thinking_budget=10000
                 ),
                 response_modalities=["TEXT"]
             )
