@@ -20,7 +20,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        pip install requests google-generativeai google-genai
+        pip install requests google-generativeai
         pip install -q -U "google-genai>=1.0.0
         
 
