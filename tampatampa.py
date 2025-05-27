@@ -60,8 +60,9 @@ def summarize_with_gemini(html_text):
     prompt = f"""
 You are a financial analyst. The following is raw HTML text extracted from Pulse (Zerodha's financial news feed). Summarize the top most relevant financial news stories involving Indian companies today. Focus on impactful developments like M&A, funding, government policy, regulatory changes, or significant market moves.
 
-Keep the summary clean, accurate, and useful for a market investor or trader. :
+Keep the summary clean, accurate, and useful for a market investor or trader. : 
 when needed use google search otherwise only think critically
+mainly focus focus on last 12 hour news
 
 
 \"\"\"{html_text[:15000]}\"\"\"
