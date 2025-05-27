@@ -34,14 +34,14 @@ if not EMAIL_USER or not EMAIL_PASS:
 
 # Initialize Gemini client
 try:
-    genai.configure(api_key=GEMINI_API_KEY)
-    client = genai.GenerativeModel('gemini-2.5-flash-preview-04-17')
+    client = genai.Client()  # API key is automatically loaded from GOOGLE_API_KEY
     logger.info("Initialized Gemini client with API key")
 except Exception as e:
     logger.error(f"Failed to initialize Gemini client: {e}")
     exit(1)
 
-# Gemini prompt (unchanged)
+# Gemini model and prompt
+MODEL_ID = "gemini-2.5-flash-preview-04-17"
 PROMPT = """
 You are an expert social media and financial analyst tasked with evaluating a screenshot or PDF of a Twitter profile's recent posts (captured via Nitter) to identify any "juicy news"—significant, attention-grabbing, or impactful information that could influence markets, public perception, or investor sentiment. The screenshot/PDF contains tweets from a specific Twitter account, including text, images, and metadata (e.g., dates, likes). The analysis is for posts captured on May 13, 2025.
 
@@ -86,9 +86,12 @@ def analyze_file(file_path, username):
         logger.info(f"Sending {file_path} for Gemini analysis")
         content = [
             {"mime_type": mime_type, "data": pathlib.Path(file_path).read_bytes()},
-            {"text": PROMPT}
+            {"mime_type": "text/plain", "data": PROMPT.encode('utf-8')}
         ]
-        response = client.generate_content(content)
+        response = client.models.generate_content(
+            model=MODEL_ID,
+            contents=content
+        )
         result_text = response.text or "No response received."
     except Exception as e:
         result_text = f"Error: {str(e)}"
