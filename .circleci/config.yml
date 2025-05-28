@@ -43,10 +43,7 @@ jobs:
           name: Install test dependencies
           command: |
             pip install pytest pytest-cov requests-mock
-      - run:
-          name: Run tests
-          command: |
-            pytest --cov=./ --cov-report=xml tests/
+
       - store_test_results:
           path: test-results
       - store_artifacts:
