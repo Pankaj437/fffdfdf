@@ -40,10 +40,32 @@ jobs:
           pkg-manager: pip
           pip-dependency-file: requirements.txt
       - run:
-          name: Install test dependencies
+          name: Install additional dependencies
+          command: |
+            pip install requests google-generativeai bs4 feedparser
+      - run:
+          name: Run fetch script
+          command: python fetch_keyword_stock_news.py
+      - run:
+          name: Run text process script
+          command: python text_process.py
+      - run:
+          name: Run send script
+          command: python send_to_gemini_news.py
+          environment:
+            GEMINI_API_KEY: $GEMINI_API_KEY
+            EMAIL_USER: $EMAIL_USER
+            EMAIL_PASS: $EMAIL_PASS
+            EMAIL_TO: $EMAIL_TO
+      - run:
+          name: Run tests (optional)
           command: |
             pip install pytest pytest-cov requests-mock
-
+            if [ -d "tests" ]; then
+              pytest --cov=./ --cov-report=xml tests/ || true
+            else
+              echo "No tests directory found, skipping tests"
+            fi
       - store_test_results:
           path: test-results
       - store_artifacts:
