@@ -1,0 +1,43 @@
+version: 2.1
+
+orbs:
+  python: circleci/python@2.1.1
+
+jobs:
+  fetch_digest_and_email:
+    docker:
+      - image: cimg/python:3.11
+    steps:
+      - checkout
+
+      - run:
+          name: Install dependencies
+          command: |
+            pip install requests google-generativeai bs4
+            pip install -q -U "google-genai>=1.0.0"
+            pip install feedparser
+
+      - run:
+          name: Run fetch script
+          command: python fetch_keyword_stock_news.py
+
+      - run:
+          name: Run text process script
+          command: python text_process.py
+
+      - run:
+          name: Run send script
+          command: python send_to_gemini_news.py
+
+workflows:
+  version: 2
+  send_digest_every_3_hours:
+    triggers:
+      - schedule:
+          cron: "0 */3 * * *"
+          filters:
+            branches:
+              only:
+                - main
+    jobs:
+      - fetch_digest_and_email
