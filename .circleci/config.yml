@@ -1,31 +1,73 @@
-# Use the latest 2.1 version of CircleCI pipeline process engine.
-# See: https://circleci.com/docs/configuration-reference
 version: 2.1
 
-# Define a job to be invoked later in a workflow.
-# See: https://circleci.com/docs/jobs-steps/#jobs-overview & https://circleci.com/docs/configuration-reference/#jobs
+orbs:
+  python: circleci/python@2.1.1
+
 jobs:
-  say-hello:
-    # Specify the execution environment. You can specify an image from Docker Hub or use one of our convenience images from CircleCI's Developer Hub.
-    # See: https://circleci.com/docs/executor-intro/ & https://circleci.com/docs/configuration-reference/#executor-job
+  fetch_digest_and_email:
     docker:
-      # Specify the version you desire here
-      # See: https://circleci.com/developer/images/image/cimg/base
-      - image: cimg/base:current
-
-    # Add steps to the job
-    # See: https://circleci.com/docs/jobs-steps/#steps-overview & https://circleci.com/docs/configuration-reference/#steps
+      - image: cimg/python:3.11
     steps:
-      # Checkout the code as the first step.
       - checkout
+      - python/install-packages:
+          pkg-manager: pip
+          pip-dependency-file: requirements.txt
       - run:
-          name: "Say hello"
-          command: "echo Hello, World!"
+          name: Install additional dependencies
+          command: |
+            pip install requests google-generativeai bs4 feedparser
+      - run:
+          name: Run fetch script
+          command: python fetch_keyword_stock_news.py
+      - run:
+          name: Run text process script
+          command: python text_process.py
+      - run:
+          name: Run send script
+          command: python send_to_gemini_news.py
+          environment:
+            GEMINI_API_KEY: $GEMINI_API_KEY
+            EMAIL_USER: $EMAIL_USER
+            EMAIL_PASS: $EMAIL_PASS
+            EMAIL_TO: $EMAIL_TO
 
-# Orchestrate jobs using workflows
-# See: https://circleci.com/docs/workflows/ & https://circleci.com/docs/configuration-reference/#workflows
+  build-and-test:
+    docker:
+      - image: cimg/python:3.11
+    steps:
+      - checkout
+      - python/install-packages:
+          pkg-manager: pip
+          pip-dependency-file: requirements.txt
+      - run:
+          name: Install test dependencies
+          command: |
+            pip install pytest pytest-cov requests-mock
+      - run:
+          name: Run tests
+          command: |
+            pytest --cov=./ --cov-report=xml
+      - store_test_results:
+          path: test-results
+      - store_artifacts:
+          path: coverage.xml
+
 workflows:
-  say-hello-workflow: # This is the name of the workflow, feel free to change it to better match your workflow.
-    # Inside the workflow, you define the jobs you want to run.
+  send_digest_every_3_hours:
+    triggers:
+      - schedule:
+          cron: "0 0,3,6,9,12,15,18,21 * * *"
+          filters:
+            branches:
+              only:
+                - main
     jobs:
-      - say-hello
+      - fetch_digest_and_email
+
+  build-and-test-workflow:
+    jobs:
+      - build-and-test:
+          filters:
+            branches:
+              only:
+                - main
