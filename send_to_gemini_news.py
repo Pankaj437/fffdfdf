@@ -57,7 +57,7 @@ You are a financial news analyst tasked with identifying the most impactful corp
 
 Input news titles:
 ```
-{{news_content}}
+{news_content}
 ```
 
 Instructions:
