@@ -1,33 +1,39 @@
-name: Fetch Stock News
+name: Fetch google news and send to gemini
 
 on:
+  workflow_dispatch: # Allows manual triggering
   schedule:
-    - cron: '0 0 * * *'  # Runs daily at midnight UTC
-  workflow_dispatch:
+    - cron: "30 12 * * *" # Runs daily at 12:30 PM UTC (6:00 PM IST)
 
 jobs:
-  fetch-news:
+  fetch_digest_and_email:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+    - name: Checkout repo
+      uses: actions/checkout@v3
 
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v4
       with:
-        python-version: '3.9'
+        python-version: "3.11"
 
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
+        pip install requests google-generativeai bs4
+        pip install -q -U "google-genai>=1.0.0"
+        pip install bs4
         pip install feedparser
+        
 
-    - name: Run news fetch script
+    - name: Run Groww Digest Analysis Script
       run: python fetch_keyword_stock_news.py
 
-    - name: Upload output file
-      uses: actions/upload-artifact@v4
-      with:
-        name: stock-news
-        path: all_stock_news.txt
+    - name: Run Groww Digest Analysis Script
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        EMAIL_USER: ${{ secrets.EMAIL_USER }}
+        EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
+        EMAIL_TO: ${{ secrets.EMAIL_TO }}
+      run: python send_to_gemini_news.py
+     
