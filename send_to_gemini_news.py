@@ -33,7 +33,7 @@ except Exception as e:
     logger.error(f"Failed to initialize Gemini client: {e}")
     client = None
 
-MODEL_ID = "gemini-2.5-flash-preview-05-20"
+MODEL_ID = "gemini-2.5-flash-preview-05-20"  # Valid model ID
 
 # Insert today's date into the prompt
 today = datetime.now().strftime("%Y-%m-%d")
@@ -43,6 +43,9 @@ def read_news_file(file_path):
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             news_content = f.read()
+        if not news_content.strip():
+            logger.error(f"News file {file_path} is empty")
+            return ""
         logger.info(f"Successfully read news from {file_path}")
         return news_content
     except FileNotFoundError:
@@ -57,7 +60,7 @@ You are a financial news analyst tasked with identifying the most impactful corp
 
 Input news titles:
 ```
-{news_content}
+{{news_content}}
 ```
 
 Instructions:
@@ -118,7 +121,7 @@ def main():
     # Read news titles from file
     news_content = read_news_file(NEWS_FILE)
     if not news_content:
-        error_msg = f"Failed to read news file {NEWS_FILE}."
+        error_msg = f"Failed to read news file {NEWS_FILE}. Please provide the news_content containing the list of news titles."
         logger.error(error_msg)
         send_email(error_msg)
         return
