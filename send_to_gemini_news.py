@@ -26,7 +26,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Set your Gemini API key
-os.environ['GOOGLE_API_KEY'] = "AIzaSyChJTCMZukwCgDUDdKAmm-SlVOX99uTlWQ"  # Replace with actual key or export it
+os.environ['GOOGLE_API_KEY'] = GEMINI_API_KEY  # Replace with actual key or export it
 
 try:
     client = genai.Client()
