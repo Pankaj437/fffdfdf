@@ -31,6 +31,27 @@ jobs:
             EMAIL_PASS: $EMAIL_PASS
             EMAIL_TO: $EMAIL_TO
 
+  build-and-test:
+    docker:
+      - image: cimg/python:3.11
+    steps:
+      - checkout
+      - python/install-packages:
+          pkg-manager: pip
+          pip-dependency-file: requirements.txt
+      - run:
+          name: Install test dependencies
+          command: |
+            pip install pytest pytest-cov requests-mock
+      - run:
+          name: Run tests
+          command: |
+            pytest --cov=./ --cov-report=xml tests/
+      - store_test_results:
+          path: test-results
+      - store_artifacts:
+          path: coverage.xml
+
 workflows:
   send_digest_every_3_hours:
     triggers:
@@ -42,3 +63,11 @@ workflows:
                 - main
     jobs:
       - fetch_digest_and_email
+
+  build-and-test-workflow:
+    jobs:
+      - build-and-test:
+          filters:
+            branches:
+              only:
+                - main
