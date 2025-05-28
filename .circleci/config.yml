@@ -23,7 +23,7 @@ jobs:
 
       - run:
           name: Run fetch script
-          command: python fetch_keyword_stock_news.py
+          command: python fetch_keyword_stock_circl_news.py
 
       - run:
           name: Run text process script
@@ -31,7 +31,7 @@ jobs:
 
       - run:
           name: Run send script
-          command: python send_to_gemini_news.py
+          command: python send_to_gemini_circle.py
 
   build-and-test:
     docker:
