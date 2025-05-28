@@ -27,7 +27,13 @@ jobs:
 
       - run:
           name: Run send script
-          command: python send_to_gemini_news.py
+          command: |
+            python send_to_gemini_news.py
+          environment:
+            GEMINI_API_KEY: GEMINI_API_KEY
+            EMAIL_USER: EMAIL_USER
+            EMAIL_PASS: EMAIL_PASS
+            EMAIL_TO: EMAIL_TO
 
 workflows:
   version: 2
@@ -35,6 +41,7 @@ workflows:
     triggers:
       - schedule:
           cron: "0 */3 * * *"
+          timezone: "UTC"
           filters:
             branches:
               only:
