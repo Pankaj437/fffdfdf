@@ -9,33 +9,29 @@ jobs:
       - image: cimg/python:3.11
     steps:
       - checkout
-
+      - python/install-packages:
+          pkg-manager: pip
+          pip-dependency-file: requirements.txt
       - run:
-          name: Install dependencies
+          name: Install additional dependencies
           command: |
-            pip install requests google-generativeai bs4
-            pip install -q -U "google-genai>=1.0.0"
-            pip install feedparser
-
+            pip install requests google-generativeai bs4 feedparser
       - run:
           name: Run fetch script
           command: python fetch_keyword_stock_news.py
-
       - run:
           name: Run text process script
           command: python text_process.py
-
       - run:
           name: Run send script
           command: python send_to_gemini_news.py
           environment:
-            GEMINI_API_KEY: GEMINI_API_KEY
-            EMAIL_USER: EMAIL_USER
-            EMAIL_PASS: EMAIL_PASS
-            EMAIL_TO: EMAIL_TO
+            GEMINI_API_KEY: $GEMINI_API_KEY
+            EMAIL_USER: $EMAIL_USER
+            EMAIL_PASS: $EMAIL_PASS
+            EMAIL_TO: $EMAIL_TO
 
 workflows:
-  version: 2
   send_digest_every_3_hours:
     triggers:
       - schedule:
