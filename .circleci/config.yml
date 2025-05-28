@@ -44,6 +44,7 @@ jobs:
           name: Install additional dependencies
           command: |
             pip install requests google-generativeai bs4 feedparser
+            pip install -q -U "google-genai>=1.0.0"
       - run:
           name: Run fetch script
           command: python fetch_keyword_stock_news.py
