@@ -2,6 +2,7 @@ import os
 import smtplib
 import logging
 from google import genai
+from google.genai.types import GenerateContentConfig
 from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -11,7 +12,7 @@ EMAIL_USER = os.getenv('EMAIL_USER')  # Your email (e.g., example@gmail.com)
 EMAIL_PASS = os.getenv('EMAIL_PASS')  # Your email app password
 EMAIL_TO = os.getenv('EMAIL_TO', EMAIL_USER)  # Recipient (default to self)
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-NEWS_FILE = "all_stock_news.txt"  # Input file from news fetching script
+NEWS_FILE = "processed_stock_news.txt"  # Path to news file
 
 # Set up logging
 logging.basicConfig(
@@ -24,8 +25,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Set Gemini API key
-os.environ['GOOGLE_API_KEY'] = GEMINI_API_KEY
+# Set your Gemini API key
+os.environ['GOOGLE_API_KEY'] = "AIzaSyChJTCMZukwCgDUDdKAmm-SlVOX99uTlWQ"  # Replace with actual key or export it
 
 try:
     client = genai.Client()
@@ -33,69 +34,47 @@ except Exception as e:
     logger.error(f"Failed to initialize Gemini client: {e}")
     client = None
 
-MODEL_ID = "gemini-2.5-flash-preview-05-20"  # Valid model ID
+MODEL_ID = "gemini-2.5-flash-preview-05-20"  # Updated to a standard model ID
 
-# Insert today's date into the prompt
-today = datetime.now().strftime("%Y-%m-%d")
-
-def read_news_file(file_path):
-    """Read the news titles from the input file."""
+# Read news file content
+def read_news_file():
+    """
+    Read the entire content of all_stock_news.txt as a string.
+    Returns:
+        str: File content or error message if file not found.
+    """
     try:
-        with open(file_path, 'r', encoding='utf-8') as f:
-            news_content = f.read()
-        if not news_content.strip():
-            logger.error(f"News file {file_path} is empty")
-            return ""
-        logger.info(f"Successfully read news from {file_path}")
-        return news_content
-    except FileNotFoundError:
-        logger.error(f"News file {file_path} not found")
-        return ""
+        if os.path.exists(NEWS_FILE):
+            with open(NEWS_FILE, 'r', encoding='utf-8') as file:
+                content = file.read().strip()
+            logger.info(f"Loaded news content from {NEWS_FILE}")
+            return content if content else "No news titles available from the provided file."
+        else:
+            logger.warning(f"News file {NEWS_FILE} not found.")
+            return "No news titles available from the provided file."
     except Exception as e:
         logger.error(f"Error reading news file: {e}")
-        return ""
+        return f"Error reading news file: {str(e)}"
 
-prompt = f"""
-You are a financial news analyst tasked with identifying the most impactful corporate news for Indian companies from a provided list of news titles, focusing on company deals, mergers and acquisitions (M&A), and funding announcements. The news titles are from the last 24 hours and cover 500 Indian stocks (mid-cap and large-cap, market cap > ₹500 Cr).
-
-Input news titles:
-```
-{{news_content}}
-```
-
-Instructions:
-- Analyze the provided news titles to identify high-impact corporate news related to:
-  - Major deals (e.g., contracts, partnerships, joint ventures)
-  - Mergers or acquisitions (domestic or cross-border)
-  - New funding rounds (e.g., venture capital, private equity, debt financing > ₹100 Cr)
-  - Significant corporate developments (e.g., government-backed initiatives, regulatory approvals)
-- Exclude minor deals or funding rounds (< ₹100 Cr) and generic market updates (e.g., "Stock market rises").
-- If no high-impact news is found, list the top 3 sectors with recent deal or funding activity based on the titles.
-- Format output in a markdown table:
-
-| Company | Type | Details | News Date |
-|---------|------|---------|-----------|
-| Example Ltd | M&A | Acquired XYZ for ₹1,200 Cr | {today} |
-
-- If insufficient data, provide a brief explanation and list the top 3 sectors.
-- Assume all titles are from reliable sources (e.g., Moneycontrol, Economic Times).
-- Limit the table to the top 5 most impactful news items to keep the output concise.
-"""
+# Read news file content to use as the prompt
+today = datetime.now().strftime("%Y-%m-%d")
+news_prompt = read_news_file()
 
 def send_email(response_text):
     """
     Send an email with the Gemini response or error message.
     Args:
-        response_text (str): The response text from Gemini API or error message.
+        response_text (str): Response from news file analysis or error message.
     Returns:
         bool: True if email sent successfully, False otherwise.
     """
     msg = MIMEMultipart()
     msg['From'] = EMAIL_USER
     msg['To'] = EMAIL_TO
-    msg['Subject'] = f"Indian Stock News Analysis - {today}"
+    msg['Subject'] = f"Indian Corporate News Analysis - {today}"
 
-    body = f"=== Indian Stock News Analysis ===\n\n{response_text}\n"
+    body = f"=== Indian Corporate News Analysis ===\n\n"
+    body += f"**Best News Item from File**\n{response_text}\n\n"
     msg.attach(MIMEText(body, 'plain'))
 
     try:
@@ -110,7 +89,7 @@ def send_email(response_text):
 
 def main():
     """
-    Main function to read news file, query Gemini API, and send response via email.
+    Main function to query Gemini API with news file content and send response via email.
     """
     if not client:
         error_msg = "Failed to initialize Gemini client. Check API key and network."
@@ -118,24 +97,17 @@ def main():
         send_email(error_msg)
         return
 
-    # Read news titles from file
-    news_content = read_news_file(NEWS_FILE)
-    if not news_content:
-        error_msg = f"Failed to read news file {NEWS_FILE}. Please provide the news_content containing the list of news titles."
-        logger.error(error_msg)
-        send_email(error_msg)
-        return
-
-    # Insert news content into prompt
-    full_prompt = prompt.replace("{{news_content}}", news_content)
-
     try:
-        # Query Gemini API
-        logger.info("Querying Gemini API...")
+        # Query Gemini API with news file content
+        logger.info("Querying Gemini API for news file analysis...")
         response = client.models.generate_content(
             model=MODEL_ID,
-            contents=full_prompt,
-            config=genai.types.GenerateContentConfig(
+            contents=news_prompt,
+            config=GenerateContentConfig(
+                thinking_config=genai.types.ThinkingConfig(
+                    include_thoughts=True,
+                    thinking_budget=10000
+                ),
                 response_modalities=["TEXT"]
             )
         )
@@ -143,17 +115,18 @@ def main():
         # Extract response
         response_text = ""
         for part in response.candidates[0].content.parts:
-            if part.text:
-                response_text += part.text
-
-        if not response_text:
-            response_text = "No relevant news found by Gemini."
+            if not part.text:
+                continue
+            if part.thought:
+                response_text += f"Thought summary:\n{part.text}\n\n"
+            else:
+                response_text += f"Answer:\n{part.text}\n\n"
 
         # Send email with response
         if send_email(response_text):
-            logger.info("Stock news analysis emailed successfully.")
+            logger.info("Corporate news analysis report emailed successfully.")
         else:
-            logger.error("Failed to send stock news analysis report.")
+            logger.error("Failed to send corporate news analysis report.")
 
     except Exception as e:
         error_msg = f"Error querying Gemini API: {str(e)}"
