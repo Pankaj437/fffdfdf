@@ -1,0 +1,7 @@
+requests
+google-generativeai
+bs4
+feedparser
+pytest
+pytest-cov
+requests-mock
