@@ -88,7 +88,7 @@ def save_all_news(companies, output_file):
         logger.error(f"Error saving to {output_file}: {e}")
 
 def main():
-    csv_file = "n0.csv"
+    csv_file = "pankaj.csv"
     output_file = "all_stock_news.txt"
     companies = read_nifty50_companies(csv_file)
 
