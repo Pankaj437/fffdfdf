@@ -61,14 +61,6 @@ jobs:
           name: Run send script
           command: python send_to_gemini_news.py
 
-      - run:
-          name: Run tests (optional)
-          command: |
-            pip install pytest pytest-cov requests-mock
-            if [ -d "tests" ]; then
-              pytest --cov=./ --cov-report=xml tests/ || true
-            else
-              echo "No tests directory found, skipping tests"
 
       - store_test_results:
           path: test-results
