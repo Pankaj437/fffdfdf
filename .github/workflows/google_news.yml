@@ -1,0 +1,33 @@
+name: Fetch Stock News
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Runs daily at midnight UTC
+  workflow_dispatch:
+
+jobs:
+  fetch-news:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.9'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install feedparser
+
+    - name: Run news fetch script
+      run: python fetch_keyword_stock_news.py
+
+    - name: Upload output file
+      uses: actions/upload-artifact@v4
+      with:
+        name: stock-news
+        path: all_stock_news.txt
