@@ -81,7 +81,7 @@ def save_all_news(companies, output_file):
                 # Wait for 10 seconds before fetching news for the next company (except for the last one)
                 if i < len(companies) - 1:
                     logger.info("Waiting for 10 seconds before next fetch...")
-                    time.sleep(10)
+                    time.sleep(4)
 
         logger.info(f"Saved all news to {output_file}")
     except Exception as e:
