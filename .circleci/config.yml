@@ -67,18 +67,14 @@ jobs:
 
       - store_artifacts:
           path: coverage.xml
-
 workflows:
   send_digest_every_3_hours:
-    triggers:
-      - schedule:
-          cron: "0 0,3,6,9,12,15,18,21 * * *"
+    jobs:
+      - fetch_digest_and_email:
           filters:
             branches:
               only:
                 - main
-    jobs:
-      - fetch_digest_and_email
 
   build-and-test-workflow:
     jobs:
