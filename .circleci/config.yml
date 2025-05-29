@@ -76,7 +76,7 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - main
     jobs:
       - fetch_digest_and_email
 
@@ -86,4 +86,4 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - main
