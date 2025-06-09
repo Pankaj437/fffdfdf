@@ -3,7 +3,7 @@ name: Fetch google news and send to gemini
 on:
   workflow_dispatch: # Allows manual triggering
   schedule:
-    - cron: "30 12 * * *" # Runs daily at 12:30 PM UTC (6:00 PM IST)
+#    - cron: "30 12 * * *" # Runs daily at 12:30 PM UTC (6:00 PM IST)
 
 jobs:
   fetch_digest_and_email:
